@@ -1,6 +1,8 @@
 import { User } from "../Models/user.model.js";
 import bcrypt from "bcryptjs";
 import { generateToken } from "../Utils/utils.js";
+import { cloudinaryConnect } from "../Config/cloudinary.config.js";
+import { ImageUploadCloudinary } from "../Utils/uploadToCloudinary.js";
 
 const signupUser = async (req, res) => {
   try {
@@ -106,4 +108,61 @@ const loginUser = async (req, res) => {
   }
 };
 
-export { signupUser, loginUser };
+const updateProfile = async (req, res) => {
+  try {
+    const profilePic = req.files?.profilePic;
+
+    if (!profilePic) {
+      return res.status(400).json({
+        success: false,
+        message: "Please provide a profile picture",
+      });
+    }
+
+    const user = await User.findById(req.user._id);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    const uploadResponse = await ImageUploadCloudinary(
+      profilePic,
+      process.env.CLOUDINARY_FOLDER_NAME,
+      300,
+      80
+    );
+
+    if (!uploadResponse) {
+      return res.status(500).json({
+        success: false,
+        message: "Failed to upload image",
+      });
+    }
+
+    const updatedUser = await User.findByIdAndUpdate(
+      user._id,
+      {
+        profilePic: uploadResponse.secure_url,
+      },
+      {
+        new: true,
+      }
+    ).select("-password");
+
+    return res.status(200).json({
+      success: true,
+      message: "Profile picture updated successfully",
+      data: updatedUser,
+    });
+  } catch (error) {
+    console.error(`Error in updateProfilePic: ${error.message}`);
+    return res.status(500).json({
+      success: false,
+      message: `Internal server error: ${error.message}`,
+    });
+  }
+};
+
+export { signupUser, loginUser, updateProfile };
