@@ -5,9 +5,9 @@ const auth = async (req, res, next) => {
   try {
     const token =
       req.header("Authorization")?.replace("Bearer ", "") ||
-      req.body.token ||
+      (req.body && req.body.token) ||
       req.header("token") ||
-      req.cookies?.token;
+      (req.cookies && req.cookies.token);
 
     if (!token) {
       return res.status(401).json({
@@ -30,7 +30,6 @@ const auth = async (req, res, next) => {
     req.user = user;
 
     next();
-
   } catch (error) {
     console.error(`Error in authenticate user: ${error.message}`);
     return res.status(401).json({
