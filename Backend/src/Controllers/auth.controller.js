@@ -6,9 +6,9 @@ import { ImageUploadCloudinary } from "../Utils/uploadToCloudinary.js";
 
 const signupUser = async (req, res) => {
   try {
-    const { firstName, lastName, email, password, conformPassword } = req.body;
+    const { firstName, lastName, email, password, confirmPassword } = req.body;
 
-    if (!firstName || !lastName || !email || !password || !conformPassword) {
+    if (!firstName || !lastName || !email || !password || !confirmPassword) {
       return res.status(400).json({
         success: false,
         message: "Please fill all fields",
@@ -22,7 +22,7 @@ const signupUser = async (req, res) => {
       });
     }
 
-    if (password !== conformPassword) {
+    if (password !== confirmPassword) {
       return res.status(400).json({
         success: false,
         message: "Passwords do not match",
@@ -165,4 +165,18 @@ const updateProfile = async (req, res) => {
   }
 };
 
-export { signupUser, loginUser, updateProfile };
+const checkAuth = async (req, res) => {
+  try {
+
+    
+  } catch (error) {
+    console.error(`Error in checkAuth: ${error.message}`);
+    return res.status(500).json({
+      success: false,
+      message: `Internal server error: ${error.message}`,
+    });
+    
+  }
+}
+
+export { signupUser, loginUser, updateProfile, checkAuth };
