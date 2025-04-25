@@ -43,7 +43,7 @@ function LoginPage() {
             <div className="size-12 mx-auto mb-4 rounded-xl bg-primary/10 flex items-center justify-center transition-all duration-200">
               <MessageSquare className="size-6 text-primary" />
             </div>
-            <h1 className="text-2xl font-bold mt-2">Welcome Back</h1>
+            <h1 className="text-3xl font-bold mt-2">Welcome Back</h1>
             <p className="text-base-content/60">Sign in to your account</p>
           </div>
 
