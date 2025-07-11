@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import Navbar from "./Components/Navbar";
 import HomePage from "./pages/HomePage";
@@ -11,26 +11,24 @@ import { Loader } from "lucide-react";
 
 function App() {
   const { authUser, checkAuth, isCheckingAuth } = useAuthStore();
- 
-  useEffect(() => {
-   const data = checkAuth();
-   console.log("checkAuth Data:", data);
-   
-  }, []);
 
-  if (isCheckingAuth && !authUser) {
+  useEffect(() => {
+    checkAuth();
+  }, [checkAuth]);
+
+  if (isCheckingAuth) {
     return (
       <div className="flex items-center justify-center h-screen bg-gray-100">
-        <Loader className="size-10 text-primary animate-spin" />
+        <Loader className="w-10 h-10 text-primary animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className=" h-screen w-full">
+    <div data-theme="valentine" className="min-h-screen w-full bg-base-100">
       <Navbar />
 
-      <main className="pt-6 px-4 ">
+      <main className="pt-6 px-4">
         <Routes>
           <Route
             path="/"
