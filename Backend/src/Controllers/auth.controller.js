@@ -91,13 +91,15 @@ const loginUser = async (req, res) => {
       lastName: user.lastName,
     };
 
+    user.password = undefined; 
+
     const token = generateToken(payload, res);
 
     return res.status(200).json({
       success: true,
       message: "User logged in successfully",
-      data: payload,
-      token: token,
+      data: user,
+      token,
     });
   } catch (error) {
     console.error(`Error in loginUser: ${error.message}`);
@@ -111,6 +113,9 @@ const loginUser = async (req, res) => {
 const updateProfile = async (req, res) => {
   try {
     const profilePic = req.files?.profilePic;
+
+    console.log(req.body);
+    
 
     if (!profilePic) {
       return res.status(400).json({
