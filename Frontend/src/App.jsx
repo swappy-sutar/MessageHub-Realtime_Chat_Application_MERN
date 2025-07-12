@@ -6,11 +6,14 @@ import SignupPage from "./pages/SingupPage";
 import LoginPage from "./pages/LoginPage";
 import SettingsPage from "./pages/SettingsPage";
 import ProfilePage from "./pages/ProfilePage";
-import { useAuthStore } from "./utils/useAuthStore";
+import { useAuthStore } from "./store/useAuthStore";
+import { useThemeStore } from "./store/useThemeStore";
 import { Loader } from "lucide-react";
+
 
 function App() {
   const { authUser, checkAuth, isCheckingAuth } = useAuthStore();
+  const { theme } = useThemeStore();
 
   useEffect(() => {
     checkAuth();
@@ -25,7 +28,7 @@ function App() {
   }
 
   return (
-    <div data-theme="valentine" className="min-h-screen w-full bg-base-100">
+    <div data-theme={theme} className="min-h-screen w-full bg-base-100">
       <Navbar />
 
       <main className="pt-6 px-4">
