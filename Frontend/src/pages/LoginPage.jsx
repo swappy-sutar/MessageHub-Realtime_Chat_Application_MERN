@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useAuthStore } from "../utils/useAuthStore";
+import { useAuthStore } from "../store/useAuthStore";
 import { Eye, EyeOff, Mail, Lock, MessageSquare, User } from "lucide-react";
 import { Link } from "react-router-dom";
 import AuthImagePattern from "../Components/AuthImagePattern";
@@ -29,6 +29,7 @@ function LoginPage() {
     e.preventDefault();
     const validated = validateForm();
     if (validated === true) {
+      
       await login(formData);
     }
   };
