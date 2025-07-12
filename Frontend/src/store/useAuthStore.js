@@ -1,6 +1,7 @@
 import { create } from "zustand";
-import { axiosInstance } from "./axios.js";
+import { axiosInstance } from "../utils/axios.js";
 import toast from "react-hot-toast";
+import Cookies from "js-cookie";
 
 const useAuthStore = create((set) => ({
   authUser: null,
@@ -12,9 +13,17 @@ const useAuthStore = create((set) => ({
 
   checkAuth: async () => {
     try {
+      const token = Cookies.get("token");
+      console.log("token in check auth:", token);
+
       const response = await axiosInstance.get("/auth/check-auth");
 
       set({ authUser: response.data });
+      if (response.data) {
+        toast.success("Authenticated successfully!");
+      } else {
+        toast.error("Not authenticated.");
+      }
     } catch (error) {
       console.error("Error checking CheckAuth:", error);
 
@@ -43,17 +52,21 @@ const useAuthStore = create((set) => ({
   logout: async () => {
     set({ isLoading: true });
     try {
-      await axiosInstance.post("/auth/logout");
+      const token = Cookies.get("token");
 
-      set({ authUser: null });
+      if (!token) {
+        toast.error("You are not logged in.");
+        return;
+      }
+      await axiosInstance.post("/auth/logout");
       toast.success("Logged out successfully!");
     } catch (error) {
       console.error("Error logging out:", error);
       toast.error(
-        error.response.data.message || "Error logging out. Please try again."
+        error.response?.data?.message || "Error logging out. Please try again."
       );
     } finally {
-      set({ isLoading: false });
+      set({ authUser: null, isLoading: false });
     }
   },
 
@@ -62,6 +75,9 @@ const useAuthStore = create((set) => ({
     try {
       const response = await axiosInstance.post("/auth/login", data);
       set({ authUser: response.data });
+
+      Cookies.set("token", response.data.token, { expires: 2, secure: true });
+
       toast.success("Logged in successfully!");
     } catch (error) {
       console.error("Error logging in:", error);
@@ -72,6 +88,42 @@ const useAuthStore = create((set) => ({
       set({ isLoggingIn: false });
     }
   },
+
+  updateProfile: async (data) => {
+    set({ isUpdateProfile: true });
+
+    const loadingToastId = toast.loading("Updating profile...");
+
+    try {
+      const token = Cookies.get("token");
+
+      if (!token) {
+        toast.error("Authentication token not found.");
+        return;
+      }
+
+      const response = await axiosInstance.put("/auth/update-profile", data, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+          Authorization: `Bearer ${token}`,
+        },
+        withCredentials: true,
+      });
+
+      set({ authUser: response.data });
+      toast.success("Profile updated successfully!");
+    } catch (error) {
+      console.error("Error updating profile:", error);
+      toast.error(
+        error.response?.data?.message ||
+          "Error updating profile. Please try again."
+      );
+    } finally {
+      set({ isUpdateProfile: false });
+      toast.dismiss(loadingToastId);
+    }
+  },
+  
 }));
 
 export { useAuthStore };
