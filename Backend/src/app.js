@@ -42,6 +42,6 @@ import messageRoutes from "./Routes/message.routes.js";
 
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/user", userRoutes);
-app.use("/api/v1/message", messageRoutes);
+app.use("/api/v1/messages", messageRoutes);
 
 export { app };
