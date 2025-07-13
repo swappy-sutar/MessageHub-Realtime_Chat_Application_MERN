@@ -31,7 +31,7 @@ function App() {
     <div data-theme={theme} className="min-h-screen w-full bg-base-100">
       <Navbar />
 
-      <main className="pt-6 px-4">
+      <main className="pt-6 ">
         <Routes>
           <Route
             path="/"
