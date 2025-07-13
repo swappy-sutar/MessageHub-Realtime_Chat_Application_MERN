@@ -10,13 +10,19 @@ const useAuthStore = create((set) => ({
   isLoading: false,
   isCheckingAuth: true,
   isUpdateProfile: false,
+  onlineUsers: [],
 
   checkAuth: async () => {
     try {
       const token = Cookies.get("token");
       console.log("token in check auth:", token);
 
-      const response = await axiosInstance.get("/auth/check-auth");
+      const response = await axiosInstance.get("/auth/check-auth",{
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        withCredentials: true,
+      });
 
       set({ authUser: response.data });
       if (response.data) {
@@ -123,7 +129,6 @@ const useAuthStore = create((set) => ({
       toast.dismiss(loadingToastId);
     }
   },
-  
 }));
 
 export { useAuthStore };
