@@ -2,6 +2,42 @@ import { Message } from "../Models/message.model.js";
 import { User } from "../Models/user.model.js";
 import { ImageUploadCloudinary } from "../Utils/uploadToCloudinary.js";
 
+const getUsersForSidebar = async (req, res) => {
+  
+  try {
+    const loggedInUserId = req.user._id;
+    if (!loggedInUserId) {
+      return res.status(400).json({
+        success: false,
+        message: "User ID is required to fetch contacts.",
+      });
+    }
+
+    const filteredUsers = await User.find({
+      _id: { $ne: loggedInUserId },
+    }).select("-password");
+
+    if (filteredUsers.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "No contacts found",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Contacts fetched successfully",
+      data: filteredUsers,
+    });
+  } catch (error) {
+    console.error("Error in getUsersForSidebar: ", error.message);
+    return res.status(500).json({ 
+      success: false,
+      message: `Internal server error: ${error.message}`,
+     });
+  }
+};
+
 const getMessages = async (req, res) => {
   try {
     const { id: userToChatId } = req.params;
@@ -13,6 +49,7 @@ const getMessages = async (req, res) => {
         { senderId: userToChatId, receiverId: senderId },
       ],
     });
+
 
     return res.status(200).json({
       success: true,
@@ -76,4 +113,4 @@ const sendMessages = async (req, res) => {
   }
 };
 
-export { getMessages, sendMessages };
+export { getUsersForSidebar, getMessages, sendMessages };
