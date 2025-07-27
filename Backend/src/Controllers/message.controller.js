@@ -72,8 +72,6 @@ const sendMessages = async (req, res) => {
     const text = req.body?.text;
     const image = req.files?.image;
 
-    console.log("Received message data:", { text, image });
-
     if (!text && !image) {
       return res.status(400).json({
         success: false,
