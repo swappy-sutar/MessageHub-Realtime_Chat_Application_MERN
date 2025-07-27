@@ -113,10 +113,7 @@ const loginUser = async (req, res) => {
 const updateProfile = async (req, res) => {
   try {
     const profilePic = req.files?.profilePic;
-
-    console.log(req.body);
     
-
     if (!profilePic) {
       return res.status(400).json({
         success: false,
