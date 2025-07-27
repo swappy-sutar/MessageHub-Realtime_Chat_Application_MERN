@@ -2,8 +2,12 @@ import { create } from "zustand";
 import { axiosInstance } from "../utils/axios.js";
 import toast from "react-hot-toast";
 import Cookies from "js-cookie";
+import { io } from "socket.io-client";
 
-const useAuthStore = create((set) => ({
+const BASE_URL =
+  import.meta.env.MODE === "development" ? "http://localhost:3000" : "/";
+
+const useAuthStore = create((set, get) => ({
   authUser: null,
   isSigningUp: false,
   isLoggingIn: false,
@@ -11,13 +15,14 @@ const useAuthStore = create((set) => ({
   isCheckingAuth: true,
   isUpdateProfile: false,
   onlineUsers: [],
+  socket: null,
 
   checkAuth: async () => {
     try {
       const token = Cookies.get("token");
       console.log("token in check auth:", token);
 
-      const response = await axiosInstance.get("/auth/check-auth",{
+      const response = await axiosInstance.get("/auth/check-auth", {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -25,11 +30,13 @@ const useAuthStore = create((set) => ({
       });
 
       set({ authUser: response.data });
+
       if (response.data) {
         toast.success("Authenticated successfully!");
       } else {
         toast.error("Not authenticated.");
       }
+      get().connectSocket();
     } catch (error) {
       console.error("Error checking CheckAuth:", error);
 
@@ -45,6 +52,7 @@ const useAuthStore = create((set) => ({
       const response = await axiosInstance.post("/auth/signup", data);
       set({ authUser: response.data });
       toast.success("Account created successfully!");
+      get().connectSocket();
     } catch (error) {
       console.error("Error signing up:", error);
       toast.error(
@@ -55,27 +63,6 @@ const useAuthStore = create((set) => ({
     }
   },
 
-  logout: async () => {
-    set({ isLoading: true });
-    try {
-      const token = Cookies.get("token");
-
-      if (!token) {
-        toast.error("You are not logged in.");
-        return;
-      }
-      await axiosInstance.post("/auth/logout");
-      toast.success("Logged out successfully!");
-    } catch (error) {
-      console.error("Error logging out:", error);
-      toast.error(
-        error.response?.data?.message || "Error logging out. Please try again."
-      );
-    } finally {
-      set({ authUser: null, isLoading: false });
-    }
-  },
-
   login: async (data) => {
     set({ isLoggingIn: true });
     try {
@@ -83,8 +70,9 @@ const useAuthStore = create((set) => ({
       set({ authUser: response.data });
 
       Cookies.set("token", response.data.token, { expires: 2, secure: true });
-
       toast.success("Logged in successfully!");
+
+      get().connectSocket();
     } catch (error) {
       console.error("Error logging in:", error);
       toast.error(
@@ -129,6 +117,65 @@ const useAuthStore = create((set) => ({
       toast.dismiss(loadingToastId);
     }
   },
+
+  logout: async () => {
+    set({ isLoading: true });
+    try {
+      const token = Cookies.get("token");
+
+      if (!token) {
+        toast.error("You are not logged in.");
+        return;
+      }
+      await axiosInstance.post("/auth/logout");
+      toast.success("Logged out successfully!");
+      get().disconnectSocket();
+    } catch (error) {
+      console.error("Error logging out:", error);
+      toast.error(
+        error.response?.data?.message || "Error logging out. Please try again."
+      );
+    } finally {
+      set({ authUser: null, isLoading: false });
+    }
+  },
+
+  connectSocket: () => {
+    const { authUser } = get();
+
+    if (!authUser || get().socket?.connected) {
+      console.warn(
+        "⛔ Cannot connect: authUser missing or socket already connected."
+      );
+      return;
+    }
+
+    const socket = io("http://localhost:3000", {
+      withCredentials: true,
+      auth: {
+        userId: authUser?.data?._id,
+      },
+    });
+
+    socket.on("connect", () => {
+      console.log("✅ Connected to socket.io with ID:", socket.id);
+    });
+
+    socket.on("getOnlineUsers", (usersId) => {
+      set({ onlineUsers: usersId });
+    });
+
+    socket.on("connect_error", (err) => {
+      console.error("❌ Socket connection error:", err.message);
+    });
+
+    set({ socket });
+  },
+
+  disconnectSocket: () => {
+    if (get().socket?.connected) get().socket.disconnect();
+  },
+  
 }));
 
 export { useAuthStore };
