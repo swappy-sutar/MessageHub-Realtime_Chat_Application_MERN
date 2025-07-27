@@ -9,8 +9,8 @@ const app = express();
 const corsOptions = {
   origin: [
     "http://localhost:5173",
-    "http://chat-app-backend-three-chi.vercel.app",
-    "http://chat-app-backend-by-er-swappy.vercel.app",
+    "https://chat-app-by-er-swappy.vercel.app",
+    "https://realtime-chat-application-mern-phi.vercel.app",
   ],
   methods: ["GET", "POST", "PUT", "DELETE"],
   credentials: true,
