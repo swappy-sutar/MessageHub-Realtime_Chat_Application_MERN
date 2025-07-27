@@ -1,6 +1,7 @@
 import { Message } from "../Models/message.model.js";
 import { User } from "../Models/user.model.js";
 import { ImageUploadCloudinary } from "../Utils/uploadToCloudinary.js";
+import { getReceiverSocketID, io } from "../Config/socket.js";
 
 const getUsersForSidebar = async (req, res) => {
   
@@ -67,10 +68,12 @@ const getMessages = async (req, res) => {
 
 const sendMessages = async (req, res) => {
   try {
-    const { text } = req.body;
+    
+    const text = req.body?.text;
     const image = req.files?.image;
 
-    // Require at least one: text or image
+    console.log("Received message data:", { text, image });
+
     if (!text && !image) {
       return res.status(400).json({
         success: false,
@@ -82,7 +85,7 @@ const sendMessages = async (req, res) => {
     const senderId = req.user._id;
 
     let imageUrl;
-    if (image) {
+    if (image && Object.keys(image).length !== 0) {
       const uploadResponse = await ImageUploadCloudinary(
         image,
         process.env.CLOUDINARY_FOLDER_NAME,
@@ -93,11 +96,17 @@ const sendMessages = async (req, res) => {
     }
 
     const newMessage = await Message.create({
-      text,
-      senderId: senderId, // previously: sender
-      receiverId: receiverId, // previously: receiver
+      senderId: senderId,
+      receiverId: receiverId,
+      text:text,
       image: imageUrl,
     });
+
+    const receiverSocketId = getReceiverSocketID(receiverId);
+
+    if (receiverSocketId) {
+      io.to(receiverSocketId).emit("newMessage",newMessage);
+    }
 
     return res.status(200).json({
       success: true,
