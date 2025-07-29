@@ -5,7 +5,8 @@ import Cookies from "js-cookie";
 import { io } from "socket.io-client";
 
 const BASE_URL =
-  import.meta.env.MODE === "development" ? "http://localhost:3000" : "/";
+  import.meta.env.VITE_API_BACKEND_URL_PRODUCTION ||
+  "http://localhost:3000/api/v1/";
 
 const useAuthStore = create((set, get) => ({
   authUser: null,
@@ -153,7 +154,7 @@ const useAuthStore = create((set, get) => ({
       return;
     }
 
-    const socket = io("http://localhost:3000", {
+    const socket = io(BASE_URL, {
       withCredentials: true,
       auth: {
         userId: authUser?.data?._id,
