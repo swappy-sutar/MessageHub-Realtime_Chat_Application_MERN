@@ -154,7 +154,7 @@ const useAuthStore = create((set, get) => ({
       return;
     }
 
-    const socket = io(BASE_URL, {
+    const socket = io("https://chat-app-backend-by-er-swappy.vercel.app/", {
       withCredentials: true,
       auth: {
         userId: authUser?.data?._id,
