@@ -69,6 +69,9 @@ const useAuthStore = create((set, get) => ({
       const response = await axiosInstance.post("/auth/login", data);
       set({ authUser: response.data });
 
+      console.log("Login response:", response.data);
+      
+
       Cookies.set("token", response.data.token, { expires: 2, secure: true });
       toast.success("Logged in successfully!");
 
