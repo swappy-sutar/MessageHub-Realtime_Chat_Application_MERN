@@ -5,7 +5,7 @@ import Cookies from "js-cookie";
 import { io } from "socket.io-client";
 
 const BASE_URL =
-  import.meta.env.VITE_API_BACKEND_URL || "http://localhost:3000/api/v1/";
+  import.meta.env.VITE_API_BACKEND_URL || "http://localhost:3000/";
 
 const useAuthStore = create((set, get) => ({
   authUser: null,
@@ -20,7 +20,6 @@ const useAuthStore = create((set, get) => ({
   checkAuth: async () => {
     try {
       const token = Cookies.get("token");
-      console.log("token in check auth:", token);
 
       const response = await axiosInstance.get("/auth/check-auth", {
         headers: {
@@ -65,21 +64,23 @@ const useAuthStore = create((set, get) => ({
 
   login: async (data) => {
     set({ isLoggingIn: true });
+
+    const loadingToastId = toast.loading("Logging in...");
+
     try {
       const response = await axiosInstance.post("/auth/login", data);
       set({ authUser: response.data });
 
-      console.log("Login response:", response.data);
-      
-
       Cookies.set("token", response.data.token, { expires: 2, secure: true });
-      toast.success("Logged in successfully!");
+
+      toast.success("Logged in successfully!", { id: loadingToastId });
 
       get().connectSocket();
     } catch (error) {
       console.error("Error logging in:", error);
       toast.error(
-        error.response.data.message || "Error logging in. Please try again."
+        error.response?.data?.message || "Error logging in. Please try again.",
+        { id: loadingToastId }
       );
     } finally {
       set({ isLoggingIn: false });
@@ -161,7 +162,7 @@ const useAuthStore = create((set, get) => ({
     });
 
     socket.on("connect", () => {
-      console.log("✅ Connected to socket.io with ID:", socket.id);
+      console.log("✅ Connected to socket.io")
     });
 
     socket.on("getOnlineUsers", (usersId) => {
@@ -178,7 +179,6 @@ const useAuthStore = create((set, get) => ({
   disconnectSocket: () => {
     if (get().socket?.connected) get().socket.disconnect();
   },
-  
 }));
 
 export { useAuthStore };

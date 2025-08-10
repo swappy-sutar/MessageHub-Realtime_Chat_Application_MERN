@@ -2,7 +2,23 @@ import { create } from "zustand";
 import { toast } from "react-hot-toast";
 import { axiosInstance } from "../utils/axios";
 import Cookies from "js-cookie";
-import {useAuthStore} from "./useAuthStore";
+import { useAuthStore } from "./useAuthStore";
+import CryptoJS from "crypto-js";
+
+const secretKey = import.meta.env.VITE_API_ENCRYPTION_KEY;
+
+const decryptMessageText = (ciphertext) => {
+  if (!ciphertext) return "";
+
+  try {
+    const bytes = CryptoJS.AES.decrypt(ciphertext, secretKey);
+    const decryptedText = bytes.toString(CryptoJS.enc.Utf8);
+    return decryptedText || "[Unable to decrypt message]";
+  } catch (error) {
+    console.error("Decryption failed:", error);
+    return "[Unable to decrypt message]";
+  }
+};
 
 export const useChatStore = create((set, get) => ({
   messages: [],
@@ -13,17 +29,12 @@ export const useChatStore = create((set, get) => ({
 
   getUsers: async () => {
     set({ isUserLoading: true });
-
     try {
       const token = Cookies.get("token");
-
       const response = await axiosInstance.get("/messages/users", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { Authorization: `Bearer ${token}` },
         withCredentials: true,
       });
-
       set({ users: response.data.data, isUserLoading: false });
     } catch (error) {
       console.error("Error fetching users:", error);
@@ -37,13 +48,18 @@ export const useChatStore = create((set, get) => ({
     try {
       const token = Cookies.get("token");
       const response = await axiosInstance.get(`/messages/${userId}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { Authorization: `Bearer ${token}` },
         withCredentials: true,
       });
 
-      set({ messages: response.data?.data || [] });
+      const encryptedMessages = response.data?.data || [];
+
+      const decryptedMessages = encryptedMessages.map((msg) => ({
+        ...msg,
+        text: decryptMessageText(msg.text),
+      }));
+
+      set({ messages: decryptedMessages });
     } catch (error) {
       toast.error(error.response?.data?.message || "Failed to load messages");
       console.log("Error fetching messages:", error);
@@ -52,9 +68,7 @@ export const useChatStore = create((set, get) => ({
     }
   },
 
-  setSelectedUser: (selectedUser) => {
-    set({ selectedUser });
-  },
+  setSelectedUser: (selectedUser) => set({ selectedUser }),
 
   sendMessage: async (formData) => {
     const token = Cookies.get("token");
@@ -73,7 +87,11 @@ export const useChatStore = create((set, get) => ({
         }
       );
 
-      set({ messages: [...messages, res.data.data] });
+      const newMsg = res.data.data;
+
+      newMsg.text = decryptMessageText(newMsg.text);
+
+      set({ messages: [...messages, newMsg] });
     } catch (error) {
       toast.error(error.response?.data?.message || "Something went wrong");
       throw error;
@@ -85,12 +103,14 @@ export const useChatStore = create((set, get) => ({
     if (!selectedUser) return;
 
     const socket = useAuthStore.getState().socket;
+    if (!socket) return;
+
+    socket.off("newMessage");
 
     socket.on("newMessage", (newMessage) => {
+      if (newMessage.senderId !== selectedUser._id) return;
 
-      const isMessageSentFromSelectedUser =
-        newMessage.senderId === selectedUser._id;
-      if (!isMessageSentFromSelectedUser) return;
+      newMessage.text = decryptMessageText(newMessage.text);
 
       set({
         messages: [...get().messages, newMessage],
@@ -100,8 +120,8 @@ export const useChatStore = create((set, get) => ({
 
   unsubscribeFromMessages: () => {
     const socket = useAuthStore.getState().socket;
-    socket.off("newMessage");
+    if (socket) {
+      socket.off("newMessage");
+    }
   },
-
-  setSelectedUser: (selectedUser) => set({ selectedUser }),
 }));
