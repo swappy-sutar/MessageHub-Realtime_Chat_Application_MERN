@@ -15,10 +15,10 @@ A modern, real-time chat application built with **MERN**, **Socket.io**, and **T
 ---
 
 ## 🌟 Tech Stack
-**Frontend:** React, TailwindCSS, DaisyUI, Zustand
-**Backend:** Node.js, Express.js, MongoDB, Socket.io, cloudinary
-**Security:** JWT, crypto.js  
-**State Management:** Zustand  
+- **Frontend:** : React, TailwindCSS, DaisyUI, Zustand
+- **Backend:** Node.js, Express.js, MongoDB, Socket.io, cloudinary
+- **Security:** JWT, crypto.js  
+- **State Management:** Zustand  
 
 ---
 
