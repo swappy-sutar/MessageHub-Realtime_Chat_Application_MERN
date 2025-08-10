@@ -16,7 +16,7 @@ A modern, real-time chat application built with **MERN**, **Socket.io**, and **T
 
 ## 🌟 Tech Stack
 - **Frontend:** : React, TailwindCSS, DaisyUI, Zustand
-- **Backend:** Node.js, Express.js, MongoDB, Socket.io, cloudinary
+- **Backend:** Node.js, Express.js, MongoDB, Socket.io, Cloudinary
 - **Security:** JWT, crypto.js  
 - **State Management:** Zustand  
 
@@ -43,7 +43,7 @@ A modern, real-time chat application built with **MERN**, **Socket.io**, and **T
   npm run dev
   ```
 
-### Backend setup:
+### Frontend setup:
 1. Navigate to the project directory:
   ```bash
   cd Frontend
