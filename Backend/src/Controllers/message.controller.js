@@ -2,9 +2,9 @@ import { Message } from "../Models/message.model.js";
 import { User } from "../Models/user.model.js";
 import { ImageUploadCloudinary } from "../Utils/uploadToCloudinary.js";
 import { getReceiverSocketID, io } from "../Config/socket.js";
+import CryptoJS from "crypto-js";
 
 const getUsersForSidebar = async (req, res) => {
-  
   try {
     const loggedInUserId = req.user._id;
     if (!loggedInUserId) {
@@ -32,10 +32,10 @@ const getUsersForSidebar = async (req, res) => {
     });
   } catch (error) {
     console.error("Error in getUsersForSidebar: ", error.message);
-    return res.status(500).json({ 
+    return res.status(500).json({
       success: false,
       message: `Internal server error: ${error.message}`,
-     });
+    });
   }
 };
 
@@ -50,7 +50,6 @@ const getMessages = async (req, res) => {
         { senderId: userToChatId, receiverId: senderId },
       ],
     });
-
 
     return res.status(200).json({
       success: true,
@@ -68,7 +67,6 @@ const getMessages = async (req, res) => {
 
 const sendMessages = async (req, res) => {
   try {
-    
     const text = req.body?.text;
     const image = req.files?.image;
 
@@ -93,17 +91,28 @@ const sendMessages = async (req, res) => {
       imageUrl = uploadResponse.secure_url;
     }
 
+    let ciphertext = null;
+    if (text) {
+      if (!process.env.ENCRYPTION_KEY) {
+        throw new Error("Encryption key is not set in environment variables");
+      }
+      ciphertext = CryptoJS.AES.encrypt(
+        text,
+        process.env.ENCRYPTION_KEY
+      ).toString();
+    }
+
     const newMessage = await Message.create({
       senderId: senderId,
       receiverId: receiverId,
-      text:text,
+      text: ciphertext,
       image: imageUrl,
     });
 
-    const receiverSocketId = getReceiverSocketID(receiverId);
+    const receiverSocketId = getReceiverSocketID(newMessage.receiverId);
 
     if (receiverSocketId) {
-      io.to(receiverSocketId).emit("newMessage",newMessage);
+      io.to(receiverSocketId).emit("newMessage", newMessage);
     }
 
     return res.status(200).json({

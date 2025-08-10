@@ -1,8 +1,14 @@
 import { Server } from "socket.io";
 import http from "http";
-import { app } from "../app.js"; // Express app
+import { app } from "../app.js"; 
 
 const server = http.createServer(app);
+
+const userSocketMap = {};
+
+const getReceiverSocketID = (userId) => {
+  return userSocketMap[userId.toString()];
+};
 
 const io = new Server(server, {
   cors: {
@@ -15,18 +21,11 @@ const io = new Server(server, {
   },
 });
 
-const getReceiverSocketID = (userId) => {
-  return userSocketMap[userId];
-};
-
-const userSocketMap = {};
-
 io.on("connection", (socket) => {
   const userId = socket.handshake.auth?.userId;
-  console.log(`⚡ User connected: ${socket.id}`);
 
   if (userId) {
-    userSocketMap[userId] = socket.id;
+    userSocketMap[userId.toString()] = socket.id;
   } else {
     console.warn("⚠ No userId found in handshake.auth!");
   }
@@ -35,7 +34,7 @@ io.on("connection", (socket) => {
 
   socket.on("disconnect", () => {
     console.log(`❌ User disconnected: ${socket.id}`);
-    if (userId) delete userSocketMap[userId];
+    if (userId) delete userSocketMap[userId.toString()];
     io.emit("getOnlineUsers", Object.keys(userSocketMap));
   });
 });
